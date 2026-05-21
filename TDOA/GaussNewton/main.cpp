@@ -17,7 +17,7 @@ double jacobian_residual[7][3];
 
 void meastdoa() {
     for (int i = 0;i <= 6;i++) {
-        tdoa[i] = peaktime[0] - peaktime[i + 1];
+        tdoa[i] = peaktime[0] - peaktime[i + 1]
     }
 }
 
