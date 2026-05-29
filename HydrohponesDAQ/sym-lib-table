@@ -1,4 +1,0 @@
-(sym_lib_table
-	(version 7)
-	(lib (name "TLV6742IDR") (type "KiCad") (uri "${KIPRJMOD}/TLV6742IDR.kicad_sym") (options "") (descr ""))
-)

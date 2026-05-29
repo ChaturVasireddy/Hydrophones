@@ -56,6 +56,7 @@ target_include_directories(ADC PRIVATE
 # Add any user requested libraries
 target_link_libraries(ADC 
         hardware_spi
+        pico_multicore
         )
 
 pico_add_extra_outputs(ADC)
