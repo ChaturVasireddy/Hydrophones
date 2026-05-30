@@ -13,11 +13,11 @@
 
 #define ADC_LOOP_US 8
 
-bool binflag[2] = { 0,0 };
-uint16_t bin[2][512];
-
 constexpr float SAMPLE_RATE = 125000.0f;
 constexpr int N = 256;
+
+bool binflag[2] = { 0,0 };
+uint16_t bin[2][N];
 
 struct GoertzelResult {
     float f25k;
@@ -106,30 +106,31 @@ int main() {
     while (true)
     {
         for (int i = 0; i < N; ++i) {
-            if (ADC_flag) {
-                ADC_flag = false;
 
-                gpio_put(PIN_CS, 0);
-                spi_read_blocking(SPI_PORT, 0, buf, 2);
-                gpio_put(PIN_CS, 1);
+            while (!ADC_flag)
+                tight_loop_contents();
+            ADC_flag = false;
 
-                bin[0][i] = (uint16_t(buf[0]) << 8) | buf[1];
-            }
+            gpio_put(PIN_CS, 0);
+            spi_read_blocking(SPI_PORT, 0, buf, 2);
+            gpio_put(PIN_CS, 1);
+
+            bin[0][i] = (uint16_t(buf[0]) << 8) | buf[1];
         }
         binflag[0] = 1;
         binflag[1] = 0;
 
         for (int i = 0; i < N; ++i) {
-            if (ADC_flag) {
-                ADC_flag = false;
 
-                gpio_put(PIN_CS, 0);
-                spi_read_blocking(SPI_PORT, 0, buf, 2);
-                gpio_put(PIN_CS, 1);
+            while (!ADC_flag)
+                tight_loop_contents();
+            ADC_flag = false;
 
-                bin[1][i] = (uint16_t(buf[0]) << 8) | buf[1];
+            gpio_put(PIN_CS, 0);
+            spi_read_blocking(SPI_PORT, 0, buf, 2);
+            gpio_put(PIN_CS, 1);
 
-            }
+            bin[1][i] = (uint16_t(buf[0]) << 8) | buf[1];
         }
         binflag[0] = 0;
         binflag[1] = 1;
