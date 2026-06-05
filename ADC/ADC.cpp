@@ -16,7 +16,7 @@
 constexpr float SAMPLE_RATE = 125000.0f;
 constexpr int N = 256;
 
-bool binflag[2] = { 0,0 };
+volatile bool binflag[2] = { 0,0 };
 uint16_t bin[2][N];
 
 struct GoertzelResult {
@@ -47,25 +47,65 @@ float goertzel(bool bin_number, float targetFreq) {
 }
 
 
-
-
 void core1_entry() {
+    GoertzelResult result;
     while (true) {
-        GoertzelResult result;
         if (binflag[0]) {
-            result.f25k = goertzel(0, 25000.0f);
-            result.f30k = goertzel(0, 30000.0f);
-            result.f35k = goertzel(0, 35000.0f);
-            result.f40k = goertzel(0, 40000.0f);
+            result.f25k = goertzel(0, 25000.0f) / 10000000.0;
+            result.f30k = goertzel(0, 30000.0f) / 10000000.0;
+            result.f35k = goertzel(0, 35000.0f) / 10000000.0;
+            result.f40k = goertzel(0, 40000.0f) / 10000000.0;
+            binflag[0] = 0;
+            if (result.f25k > 10.0 || result.f30k > 10.0 || result.f35k > 10.0 || result.f40k > 10.0) {
+                if (result.f25k > result.f30k && result.f25k > result.f35k && result.f25k > result.f40k) {
+                    printf("25k\n");
+                }
+                else if (result.f30k > result.f25k && result.f30k > result.f35k && result.f30k > result.f40k) {
+                    printf("30k\n");
+                }
+                else if (result.f35k > result.f25k && result.f35k > result.f30k && result.f35k > result.f40k) {
+                    printf("35k\n");
+                }
+                else {
+                    printf("40k\n");
+                }
+                for (int i = 0; i < N; ++i) {
+                    printf("%u\n", bin[0][i] & 0x0FFF);
+                    sleep_ms(10);
+                }
+                return;
+            }
+            else
+                printf("null\n");
         }
-        else if (binflag[1]) {
-            result.f25k = goertzel(1, 25000.0f);
-            result.f30k = goertzel(1, 30000.0f);
-            result.f35k = goertzel(1, 35000.0f);
-            result.f40k = goertzel(1, 40000.0f);
+        if (binflag[1]) {
+            result.f25k = goertzel(1, 25000.0f) / 10000000.0;
+            result.f30k = goertzel(1, 30000.0f) / 10000000.0;
+            result.f35k = goertzel(1, 35000.0f) / 10000000.0;
+            result.f40k = goertzel(1, 40000.0f) / 10000000.0;
+            binflag[1] = 0;
+            if (result.f25k > 10.0 || result.f30k > 10.0 || result.f35k > 10.0 || result.f40k > 10.0) {
+                if (result.f25k > result.f30k && result.f25k > result.f35k && result.f25k > result.f40k) {
+                    printf("25k\n");
+                }
+                else if (result.f30k > result.f25k && result.f30k > result.f35k && result.f30k > result.f40k) {
+                    printf("30k\n");
+                }
+                else if (result.f35k > result.f25k && result.f35k > result.f30k && result.f35k > result.f40k) {
+                    printf("35k\n");
+                }
+                else {
+                    printf("40k\n");
+                }
+                for (int i = 0; i < N; ++i) {
+                    printf("%u\n", bin[1][i] & 0x0FFF);
+                    sleep_ms(10);
+                }
+                return;
+            }
+            else
+                printf("null\n");
         }
-        printf("%f\t%f\t%f\t%f\n", result.f25k / 10000000.0, result.f30k / 10000000.0, result.f35k / 10000000.0, result.f40k / 10000000.0);
-        sleep_ms(1000);
     }
 }
 
@@ -105,34 +145,35 @@ int main() {
 
     while (true)
     {
-        for (int i = 0; i < N; ++i) {
+        if (!binflag[0]) {
+            for (int i = 0; i < N; ++i) {
 
-            while (!ADC_flag)
-                tight_loop_contents();
-            ADC_flag = false;
+                while (!ADC_flag)
+                    tight_loop_contents();
+                ADC_flag = false;
 
-            gpio_put(PIN_CS, 0);
-            spi_read_blocking(SPI_PORT, 0, buf, 2);
-            gpio_put(PIN_CS, 1);
+                gpio_put(PIN_CS, 0);
+                spi_read_blocking(SPI_PORT, 0, buf, 2);
+                gpio_put(PIN_CS, 1);
 
-            bin[0][i] = (uint16_t(buf[0]) << 8) | buf[1];
+                bin[0][i] = (uint16_t(buf[0]) << 8) | buf[1];
+            }
+            binflag[0] = 1;
         }
-        binflag[0] = 1;
-        binflag[1] = 0;
+        if (!binflag[1]) {
+            for (int i = 0; i < N; ++i) {
 
-        for (int i = 0; i < N; ++i) {
+                while (!ADC_flag)
+                    tight_loop_contents();
+                ADC_flag = false;
 
-            while (!ADC_flag)
-                tight_loop_contents();
-            ADC_flag = false;
+                gpio_put(PIN_CS, 0);
+                spi_read_blocking(SPI_PORT, 0, buf, 2);
+                gpio_put(PIN_CS, 1);
 
-            gpio_put(PIN_CS, 0);
-            spi_read_blocking(SPI_PORT, 0, buf, 2);
-            gpio_put(PIN_CS, 1);
-
-            bin[1][i] = (uint16_t(buf[0]) << 8) | buf[1];
+                bin[1][i] = (uint16_t(buf[0]) << 8) | buf[1];
+            }
+            binflag[1] = 1;
         }
-        binflag[0] = 0;
-        binflag[1] = 1;
     }
 }
