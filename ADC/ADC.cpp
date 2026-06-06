@@ -79,10 +79,10 @@ void core1_entry() {
             binflag[0] = 0;
         }
         if (binflag[1]) {
-            goertzel_result[0] = goertzel(0, F0) / 10000000.0;
-            goertzel_result[1] = goertzel(0, F1) / 10000000.0;
-            goertzel_result[2] = goertzel(0, F2) / 10000000.0;
-            goertzel_result[3] = goertzel(0, F3) / 10000000.0;
+            goertzel_result[0] = goertzel(1, F0) / 10000000.0;
+            goertzel_result[1] = goertzel(1, F1) / 10000000.0;
+            goertzel_result[2] = goertzel(1, F2) / 10000000.0;
+            goertzel_result[3] = goertzel(1, F3) / 10000000.0;
             if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     printf("25k\n");
