@@ -5,6 +5,12 @@
 #include <cmath>
 #include <cstdint>
 
+#define F0 25000.0f
+#define F1 30000.0f
+#define F2 35000.0f
+#define F3 40000.0f
+
+
 #define SPI_PORT spi0
 
 #define PIN_MISO 0
@@ -19,12 +25,7 @@ constexpr int N = 256;
 volatile bool binflag[2] = { 0,0 };
 uint16_t bin[2][N];
 
-struct GoertzelResult {
-    float f25k;
-    float f30k;
-    float f35k;
-    float f40k;
-};
+float goertzel_result[4] = { 0,0,0,0 };
 
 float goertzel(bool bin_number, float targetFreq) {
     const float omega = 2.0f * M_PI * targetFreq / SAMPLE_RATE;
@@ -48,22 +49,21 @@ float goertzel(bool bin_number, float targetFreq) {
 
 
 void core1_entry() {
-    GoertzelResult result;
     while (true) {
         if (binflag[0]) {
-            result.f25k = goertzel(0, 25000.0f) / 10000000.0;
-            result.f30k = goertzel(0, 30000.0f) / 10000000.0;
-            result.f35k = goertzel(0, 35000.0f) / 10000000.0;
-            result.f40k = goertzel(0, 40000.0f) / 10000000.0;
+            goertzel_result[0] = goertzel(0, 25000.0f) / 10000000.0;
+            goertzel_result[1] = goertzel(0, 30000.0f) / 10000000.0;
+            goertzel_result[2] = goertzel(0, 35000.0f) / 10000000.0;
+            goertzel_result[3] = goertzel(0, 40000.0f) / 10000000.0;
             binflag[0] = 0;
-            if (result.f25k > 10.0 || result.f30k > 10.0 || result.f35k > 10.0 || result.f40k > 10.0) {
-                if (result.f25k > result.f30k && result.f25k > result.f35k && result.f25k > result.f40k) {
+            if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
+                if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     printf("25k\n");
                 }
-                else if (result.f30k > result.f25k && result.f30k > result.f35k && result.f30k > result.f40k) {
+                else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
                     printf("30k\n");
                 }
-                else if (result.f35k > result.f25k && result.f35k > result.f30k && result.f35k > result.f40k) {
+                else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[30] && goertzel_result[2] > goertzel_result[3]) {
                     printf("35k\n");
                 }
                 else {
@@ -79,19 +79,19 @@ void core1_entry() {
                 printf("null\n");
         }
         if (binflag[1]) {
-            result.f25k = goertzel(1, 25000.0f) / 10000000.0;
-            result.f30k = goertzel(1, 30000.0f) / 10000000.0;
-            result.f35k = goertzel(1, 35000.0f) / 10000000.0;
-            result.f40k = goertzel(1, 40000.0f) / 10000000.0;
+            goertzel_result[0] = goertzel(0, 25000.0f) / 10000000.0;
+            goertzel_result[1] = goertzel(0, 30000.0f) / 10000000.0;
+            goertzel_result[2] = goertzel(0, 35000.0f) / 10000000.0;
+            goertzel_result[3] = goertzel(0, 40000.0f) / 10000000.0;
             binflag[1] = 0;
-            if (result.f25k > 10.0 || result.f30k > 10.0 || result.f35k > 10.0 || result.f40k > 10.0) {
-                if (result.f25k > result.f30k && result.f25k > result.f35k && result.f25k > result.f40k) {
+            if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
+                if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     printf("25k\n");
                 }
-                else if (result.f30k > result.f25k && result.f30k > result.f35k && result.f30k > result.f40k) {
+                else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
                     printf("30k\n");
                 }
-                else if (result.f35k > result.f25k && result.f35k > result.f30k && result.f35k > result.f40k) {
+                else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[30] && goertzel_result[2] > goertzel_result[3]) {
                     printf("35k\n");
                 }
                 else {
