@@ -51,11 +51,10 @@ float goertzel(bool bin_number, float targetFreq) {
 void core1_entry() {
     while (true) {
         if (binflag[0]) {
-            goertzel_result[0] = goertzel(0, 25000.0f) / 10000000.0;
-            goertzel_result[1] = goertzel(0, 30000.0f) / 10000000.0;
-            goertzel_result[2] = goertzel(0, 35000.0f) / 10000000.0;
-            goertzel_result[3] = goertzel(0, 40000.0f) / 10000000.0;
-            binflag[0] = 0;
+            goertzel_result[0] = goertzel(0, F0) / 10000000.0;
+            goertzel_result[1] = goertzel(0, F1) / 10000000.0;
+            goertzel_result[2] = goertzel(0, F2) / 10000000.0;
+            goertzel_result[3] = goertzel(0, F3) / 10000000.0;
             if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     printf("25k\n");
@@ -77,13 +76,13 @@ void core1_entry() {
             }
             else
                 printf("null\n");
+            binflag[0] = 0;
         }
         if (binflag[1]) {
-            goertzel_result[0] = goertzel(0, 25000.0f) / 10000000.0;
-            goertzel_result[1] = goertzel(0, 30000.0f) / 10000000.0;
-            goertzel_result[2] = goertzel(0, 35000.0f) / 10000000.0;
-            goertzel_result[3] = goertzel(0, 40000.0f) / 10000000.0;
-            binflag[1] = 0;
+            goertzel_result[0] = goertzel(0, F0) / 10000000.0;
+            goertzel_result[1] = goertzel(0, F1) / 10000000.0;
+            goertzel_result[2] = goertzel(0, F2) / 10000000.0;
+            goertzel_result[3] = goertzel(0, F3) / 10000000.0;
             if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     printf("25k\n");
@@ -105,6 +104,7 @@ void core1_entry() {
             }
             else
                 printf("null\n");
+            binflag[1] = 0;
         }
     }
 }
