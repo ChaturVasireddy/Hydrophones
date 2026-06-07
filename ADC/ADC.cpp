@@ -156,7 +156,7 @@ int main() {
                 spi_read_blocking(SPI_PORT, 0, buf, 2);
                 gpio_put(PIN_CS, 1);
 
-                bin[0][i] = (uint16_t(buf[0]) << 8) | buf[1];
+                bin[0][i] = (((uint16_t(buf[0]) << 8) | buf[1]) & 0x0FFF);
                 bin[0][i] -= 2048;
             }
             binflag[0] = 1;
@@ -172,7 +172,7 @@ int main() {
                 spi_read_blocking(SPI_PORT, 0, buf, 2);
                 gpio_put(PIN_CS, 1);
 
-                bin[1][i] = (uint16_t(buf[0]) << 8) | buf[1];
+                bin[1][i] = (((uint16_t(buf[0]) << 8) | buf[1]) & 0x0FFF);
                 bin[1][i] -= 2048;
             }
             binflag[1] = 1;
