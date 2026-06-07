@@ -23,7 +23,7 @@ constexpr float SAMPLE_RATE = 125000.0f;
 constexpr int N = 256;
 
 volatile bool binflag[2] = { 0,0 };
-uint16_t bin[2][N];
+int16_t bin[2][N];
 
 float goertzel_result[4] = { 0,0,0,0 };
 
@@ -157,6 +157,7 @@ int main() {
                 gpio_put(PIN_CS, 1);
 
                 bin[0][i] = (uint16_t(buf[0]) << 8) | buf[1];
+                bin[0][i] -= 2048;
             }
             binflag[0] = 1;
         }
@@ -172,6 +173,7 @@ int main() {
                 gpio_put(PIN_CS, 1);
 
                 bin[1][i] = (uint16_t(buf[0]) << 8) | buf[1];
+                bin[1][i] -= 2048;
             }
             binflag[1] = 1;
         }
