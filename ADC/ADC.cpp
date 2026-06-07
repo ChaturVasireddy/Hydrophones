@@ -22,7 +22,7 @@ int main()
     gpio_put(PIN_CS, 1);
 
     uint8_t buf[2];
-    uint16_t samples[512];
+    int16_t samples[512];
     absolute_time_t next_sample_time = get_absolute_time();
 
     while (true)
@@ -36,15 +36,14 @@ int main()
 
             gpio_put(PIN_CS, 1);
 
-            samples[i] = (uint16_t(buf[0]) << 8) | buf[1];
-
-            next_sample_time = delayed_by_us(next_sample_time, 8);
-            busy_wait_until(next_sample_time);
+            samples[i] = (((uint16_t(buf[0]) << 8) | buf[1]) & 0x0FFF);
+            samples[i] -= 2048;
+            sleep_us(5);
         }
 
         for (int i = 0; i < 512; ++i)
         {
-            printf("%u\n", samples[i] & 0x0FFF);
+            printf("%d\n", samples[i]);
         }
 
     }
