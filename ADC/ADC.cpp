@@ -69,7 +69,7 @@ void core1_entry() {
                     printf("40k\n");
                 }
                 for (int i = 0; i < N; ++i) {
-                    printf("%d\n", bin[0][i] & 0x0FFF);
+                    printf("%d\n", bin[0][i]);
                     sleep_ms(10);
                 }
                 return;
@@ -97,7 +97,7 @@ void core1_entry() {
                     printf("40k\n");
                 }
                 for (int i = 0; i < N; ++i) {
-                    printf("%d\n", bin[1][i] & 0x0FFF);
+                    printf("%d\n", bin[1][i]);
                     sleep_ms(10);
                 }
                 return;
