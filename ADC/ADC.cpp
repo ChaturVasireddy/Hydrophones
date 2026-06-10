@@ -25,6 +25,10 @@ constexpr int N = 2048;
 volatile bool binflag[2] = { 0,0 };
 int16_t bin[2][N];
 
+int peak_freq = -1;
+int peak_time = -1;
+int bin_count = 0;
+
 float goertzel_result[4] = { 0,0,0,0 };
 
 float goertzel(bool bin_number, float targetFreq) {
@@ -47,60 +51,63 @@ float goertzel(bool bin_number, float targetFreq) {
     return real * real + imag * imag;
 }
 
-
 void core1_entry() {
     while (true) {
         if (binflag[0]) {
-            goertzel_result[0] = goertzel(0, F0) / 10000000.0;
-            goertzel_result[1] = goertzel(0, F1) / 10000000.0;
-            goertzel_result[2] = goertzel(0, F2) / 10000000.0;
-            goertzel_result[3] = goertzel(0, F3) / 10000000.0;
-            if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
+            bin_count++;
+            goertzel_result[0] = goertzel(0, F0);
+            goertzel_result[1] = goertzel(0, F1);
+            goertzel_result[2] = goertzel(0, F2);
+            goertzel_result[3] = goertzel(0, F3);
+            if (goertzel_result[0] > 100000000.0 || goertzel_result[1] > 100000000.0 || goertzel_result[2] > 100000000.0 || goertzel_result[3] > 100000000.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
-                    detected_freq = 1;
+                    peak_freq = 0;
                 }
                 else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
-                    printf("30k\n");
+                    peak_freq = 1;
                 }
                 else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[30] && goertzel_result[2] > goertzel_result[3]) {
-                    printf("35k\n");
+                    peak_freq = 2;
                 }
                 else {
-                    printf("40k\n");
+                    peak_freq = 3;
                 }
                 for (int i = 0; i < N; ++i) {
-                    printf("%d\n", bin[0][i]);
-                    sleep_ms(1);
+                    if (bin[0][i] > 512 || bin[0][i] < -512) {
+                        peak_time = (bin_count * N) + i;
+                        break;
+                    }
                 }
-                return;
             }
             else
                 printf("null\n");
             binflag[0] = 0;
         }
         if (binflag[1]) {
-            goertzel_result[0] = goertzel(1, F0) / 10000000.0;
-            goertzel_result[1] = goertzel(1, F1) / 10000000.0;
-            goertzel_result[2] = goertzel(1, F2) / 10000000.0;
-            goertzel_result[3] = goertzel(1, F3) / 10000000.0;
-            if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
+            bin_count++;
+            goertzel_result[0] = goertzel(1, F0);
+            goertzel_result[1] = goertzel(1, F1);
+            goertzel_result[2] = goertzel(1, F2);
+            goertzel_result[3] = goertzel(1, F3);
+            if (goertzel_result[0] > 100000000.0 || goertzel_result[1] > 100000000.0 || goertzel_result[2] > 100000000.0 || goertzel_result[3] > 100000000.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
-                    detected_freq = 1;
+                    peak_freq = 0;
                 }
                 else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
-                    printf("30k\n");
+                    peak_freq = 1;
                 }
                 else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[30] && goertzel_result[2] > goertzel_result[3]) {
-                    printf("35k\n");
+                    peak_freq = 2;
                 }
                 else {
-                    printf("40k\n");
+                    peak_freq = 3;
                 }
                 for (int i = 0; i < N; ++i) {
-                    printf("%d\n", bin[1][i]);
-                    sleep_ms(1);
+                    if (bin[0][i] > 512 || bin[0][i] < -512) {
+                        peak_time = (bin_count * N) + i;
+                        break;
+                    }
                 }
-                return;
             }
             else
                 printf("null\n");
