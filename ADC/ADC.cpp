@@ -20,7 +20,7 @@
 #define ADC_LOOP_US 8
 
 constexpr float SAMPLE_RATE = 125000.0f;
-constexpr int N = 256;
+constexpr int N = 2048;
 
 volatile bool binflag[2] = { 0,0 };
 int16_t bin[2][N];
@@ -57,7 +57,7 @@ void core1_entry() {
             goertzel_result[3] = goertzel(0, F3) / 10000000.0;
             if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
-                    printf("25k\n");
+                    detected_freq = 1;
                 }
                 else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
                     printf("30k\n");
@@ -70,7 +70,7 @@ void core1_entry() {
                 }
                 for (int i = 0; i < N; ++i) {
                     printf("%d\n", bin[0][i]);
-                    sleep_ms(10);
+                    sleep_ms(1);
                 }
                 return;
             }
@@ -85,7 +85,7 @@ void core1_entry() {
             goertzel_result[3] = goertzel(1, F3) / 10000000.0;
             if (goertzel_result[0] > 10.0 || goertzel_result[1] > 10.0 || goertzel_result[2] > 10.0 || goertzel_result[3] > 10.0) {
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
-                    printf("25k\n");
+                    detected_freq = 1;
                 }
                 else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
                     printf("30k\n");
@@ -98,7 +98,7 @@ void core1_entry() {
                 }
                 for (int i = 0; i < N; ++i) {
                     printf("%d\n", bin[1][i]);
-                    sleep_ms(10);
+                    sleep_ms(1);
                 }
                 return;
             }
