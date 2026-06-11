@@ -10,12 +10,17 @@
 #define F2 35000.0f
 #define F3 40000.0f
 
+#define SPI_PORT_ADC spi0
 
-#define SPI_PORT spi0
+#define PIN_RX_ADC 0
+#define PIN_CS_ADC 1
+#define PIN_SCK_ADC 2
 
-#define PIN_MISO 0
-#define PIN_CS 1
-#define PIN_SCK 2
+#define SPI_PORT_MCU spi1
+
+#define PIN_TX_MCU 11
+#define PIN_CS_MCU 9
+#define PIN_SCK_MCU 10
 
 #define ADC_LOOP_US 8
 
@@ -49,6 +54,10 @@ float goertzel(bool bin_number, float targetFreq) {
     const float imag = q2 * sinf(omega);
 
     return real * real + imag * imag;
+}
+
+void send_peak() {
+
 }
 
 void core1_entry() {
@@ -108,7 +117,7 @@ void core1_entry() {
                         break;
                     }
                 }
-            }
+            }                                                                                                                                             
             else
                 printf("null\n");
             binflag[1] = 0;
@@ -136,13 +145,19 @@ int main() {
 
     stdio_init_all();
 
-    spi_init(SPI_PORT, 8 * 1000 * 1000);
+    spi_init(SPI_PORT_ADC, 8 * 1000 * 1000);
+    gpio_set_function(PIN_RX_ADC, GPIO_FUNC_SPI);
+    gpio_set_function(PIN_SCK_ADC, GPIO_FUNC_SPI);
+    gpio_init(PIN_CS_ADC);
+    gpio_set_dir(PIN_CS_ADC, GPIO_OUT);
+    gpio_put(PIN_CS_ADC, 1);
 
-    gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
-    gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
-    gpio_init(PIN_CS);
-    gpio_set_dir(PIN_CS, GPIO_OUT);
-    gpio_put(PIN_CS, 1);
+    spi_init(SPI_PORT_MCU, 8 * 1000 * 1000);
+    gpio_set_function(PIN_TX_MCU, GPIO_FUNC_SPI);
+    gpio_set_function(PIN_SCK_MCU, GPIO_FUNC_SPI);
+    gpio_init(PIN_CS_MCU);
+    gpio_set_dir(PIN_CS_MCU, GPIO_OUT);
+    gpio_put(PIN_CS_MCU, 1);
 
     multicore_launch_core1(core1_entry);
 
@@ -159,9 +174,9 @@ int main() {
                     tight_loop_contents();
                 ADC_flag = false;
 
-                gpio_put(PIN_CS, 0);
-                spi_read_blocking(SPI_PORT, 0, buf, 2);
-                gpio_put(PIN_CS, 1);
+                gpio_put(PIN_CS_ADC, 0);
+                spi_read_blocking(SPI_PORT_ADC, 0, buf, 2);
+                gpio_put(PIN_CS_ADC, 1);
 
                 bin[0][i] = (((uint16_t(buf[0]) << 8) | buf[1]) & 0x0FFF);
                 bin[0][i] -= 2048;
@@ -175,9 +190,9 @@ int main() {
                     tight_loop_contents();
                 ADC_flag = false;
 
-                gpio_put(PIN_CS, 0);
-                spi_read_blocking(SPI_PORT, 0, buf, 2);
-                gpio_put(PIN_CS, 1);
+                gpio_put(PIN_CS_ADC, 0);
+                spi_read_blocking(SPI_PORT_ADC, 0, buf, 2);
+                gpio_put(PIN_CS_ADC, 1);
 
                 bin[1][i] = (((uint16_t(buf[0]) << 8) | buf[1]) & 0x0FFF);
                 bin[1][i] -= 2048;
