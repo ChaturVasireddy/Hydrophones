@@ -10,6 +10,13 @@
 #define F2 35000.0f
 #define F3 40000.0f
 
+#define INT_PIN 5
+
+volatile bool sync_flag = false;
+void gpio_callback(uint gpio, uint32_t events) {
+    sync_flag = true;
+}
+
 #define SPI_PORT_ADC spi0
 
 #define PIN_RX_ADC 0
@@ -63,7 +70,6 @@ void send_peak() {
 void core1_entry() {
     while (true) {
         if (binflag[0]) {
-            bin_count++;
             goertzel_result[0] = goertzel(0, F0);
             goertzel_result[1] = goertzel(0, F1);
             goertzel_result[2] = goertzel(0, F2);
@@ -75,7 +81,7 @@ void core1_entry() {
                 else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
                     peak_freq = 1;
                 }
-                else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[30] && goertzel_result[2] > goertzel_result[3]) {
+                else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[1] && goertzel_result[2] > goertzel_result[3]) {
                     peak_freq = 2;
                 }
                 else {
@@ -91,9 +97,9 @@ void core1_entry() {
             else
                 printf("null\n");
             binflag[0] = 0;
+            bin_count++;
         }
         if (binflag[1]) {
-            bin_count++;
             goertzel_result[0] = goertzel(1, F0);
             goertzel_result[1] = goertzel(1, F1);
             goertzel_result[2] = goertzel(1, F2);
@@ -105,7 +111,7 @@ void core1_entry() {
                 else if (goertzel_result[1] > goertzel_result[0] && goertzel_result[1] > goertzel_result[2] && goertzel_result[1] > goertzel_result[3]) {
                     peak_freq = 1;
                 }
-                else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[30] && goertzel_result[2] > goertzel_result[3]) {
+                else if (goertzel_result[2] > goertzel_result[0] && goertzel_result[2] > goertzel_result[1] && goertzel_result[2] > goertzel_result[3]) {
                     peak_freq = 2;
                 }
                 else {
@@ -117,10 +123,11 @@ void core1_entry() {
                         break;
                     }
                 }
-            }                                                                                                                                             
+            }
             else
                 printf("null\n");
             binflag[1] = 0;
+            bin_count++;
         }
     }
 }
@@ -159,6 +166,11 @@ int main() {
     gpio_set_dir(PIN_CS_MCU, GPIO_OUT);
     gpio_put(PIN_CS_MCU, 1);
 
+    gpio_init(INT_PIN);
+    gpio_set_dir(INT_PIN, GPIO_IN);
+    gpio_pull_up(INT_PIN);
+    gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
+
     multicore_launch_core1(core1_entry);
 
     uint8_t buf[2];
@@ -167,7 +179,15 @@ int main() {
 
     while (true)
     {
-        if (!binflag[0]) {
+        if (sync_flag == 1) {
+            binflag[0] = 0;
+            binflag[1] = 0;
+            while (gpio_get(INT_PIN)) {
+                tight_loop_contents();
+            }
+            sync_flag = 0;
+        }
+        if (!binflag[0] && sync_flag == 0) {
             for (int i = 0; i < N; ++i) {
 
                 while (!ADC_flag)
@@ -183,7 +203,7 @@ int main() {
             }
             binflag[0] = 1;
         }
-        if (!binflag[1]) {
+        if (!binflag[1] && sync_flag == 0) {
             for (int i = 0; i < N; ++i) {
 
                 while (!ADC_flag)
