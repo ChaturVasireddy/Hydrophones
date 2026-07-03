@@ -4,6 +4,8 @@
 #include "pico/multicore.h"
 #include <cmath>
 #include <cstdint>
+#include "hardware/pio.h"
+#include "customcom.pio.h"
 
 #define F0 25000.0f
 #define F1 30000.0f
@@ -75,6 +77,7 @@ void core1_entry() {
             goertzel_result[2] = goertzel(0, F2);
             goertzel_result[3] = goertzel(0, F3);
             if (goertzel_result[0] > 100000000.0 || goertzel_result[1] > 100000000.0 || goertzel_result[2] > 100000000.0 || goertzel_result[3] > 100000000.0) {
+
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     peak_freq = 0;
                 }
@@ -105,6 +108,7 @@ void core1_entry() {
             goertzel_result[2] = goertzel(1, F2);
             goertzel_result[3] = goertzel(1, F3);
             if (goertzel_result[0] > 100000000.0 || goertzel_result[1] > 100000000.0 || goertzel_result[2] > 100000000.0 || goertzel_result[3] > 100000000.0) {
+
                 if (goertzel_result[0] > goertzel_result[1] && goertzel_result[0] > goertzel_result[2] && goertzel_result[0] > goertzel_result[3]) {
                     peak_freq = 0;
                 }
@@ -143,12 +147,7 @@ bool ADC_timer_cb(struct repeating_timer* t)
 
 int main() {
 
-    add_repeating_timer_us(
-        -ADC_LOOP_US,
-        ADC_timer_cb,
-        NULL,
-        &ADC_timer
-    );
+    add_repeating_timer_us(-ADC_LOOP_US, ADC_timer_cb, NULL, &ADC_timer);
 
     stdio_init_all();
 
