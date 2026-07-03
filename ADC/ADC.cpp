@@ -13,10 +13,21 @@
 #define F3 40000.0f
 
 #define INT_PIN 5
+#define SAMPLE_CLK_PIN 9
 
 volatile bool sync_flag = false;
-void gpio_callback(uint gpio, uint32_t events) {
-    sync_flag = true;
+volatile bool ADC_flag = false;
+
+void gpio_callback(uint gpio, uint32_t events)
+{
+    if (gpio == SAMPLE_CLK_PIN)
+    {
+        ADC_flag = true;
+    }
+    else if (gpio == INT_PIN)
+    {
+        sync_flag = true;
+    }
 }
 
 #define SPI_PORT_ADC spi0
@@ -24,14 +35,6 @@ void gpio_callback(uint gpio, uint32_t events) {
 #define PIN_RX_ADC 0
 #define PIN_CS_ADC 1
 #define PIN_SCK_ADC 2
-
-#define SPI_PORT_MCU spi1
-
-#define PIN_TX_MCU 11
-#define PIN_CS_MCU 9
-#define PIN_SCK_MCU 10
-
-#define ADC_LOOP_US 8
 
 constexpr float SAMPLE_RATE = 125000.0f;
 constexpr int N = 2048;
@@ -122,7 +125,7 @@ void core1_entry() {
                     peak_freq = 3;
                 }
                 for (int i = 0; i < N; ++i) {
-                    if (bin[0][i] > 512 || bin[0][i] < -512) {
+                    if (bin[1][i] > 512 || bin[1][i] < -512) {
                         peak_time = (bin_count * N) + i;
                         break;
                     }
@@ -136,18 +139,7 @@ void core1_entry() {
     }
 }
 
-volatile bool ADC_flag = false;
-struct repeating_timer ADC_timer;
-
-bool ADC_timer_cb(struct repeating_timer* t)
-{
-    ADC_flag = true;
-    return true;
-}
-
 int main() {
-
-    add_repeating_timer_us(-ADC_LOOP_US, ADC_timer_cb, NULL, &ADC_timer);
 
     stdio_init_all();
 
@@ -158,29 +150,26 @@ int main() {
     gpio_set_dir(PIN_CS_ADC, GPIO_OUT);
     gpio_put(PIN_CS_ADC, 1);
 
-    spi_init(SPI_PORT_MCU, 8 * 1000 * 1000);
-    gpio_set_function(PIN_TX_MCU, GPIO_FUNC_SPI);
-    gpio_set_function(PIN_SCK_MCU, GPIO_FUNC_SPI);
-    gpio_init(PIN_CS_MCU);
-    gpio_set_dir(PIN_CS_MCU, GPIO_OUT);
-    gpio_put(PIN_CS_MCU, 1);
-
     gpio_init(INT_PIN);
     gpio_set_dir(INT_PIN, GPIO_IN);
     gpio_pull_up(INT_PIN);
     gpio_set_irq_enabled_with_callback(INT_PIN, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 
+    gpio_init(SAMPLE_CLK_PIN);
+    gpio_set_dir(SAMPLE_CLK_PIN, GPIO_IN);
+    gpio_pull_down(SAMPLE_CLK_PIN);
+    gpio_set_irq_enabled(SAMPLE_CLK_PIN, GPIO_IRQ_EDGE_RISE, true);
+
     multicore_launch_core1(core1_entry);
 
     uint8_t buf[2];
-
-    repeating_timer_t timer;
 
     while (true)
     {
         if (sync_flag == 1) {
             binflag[0] = 0;
             binflag[1] = 0;
+            bin_count = 0;
             while (gpio_get(INT_PIN)) {
                 tight_loop_contents();
             }
