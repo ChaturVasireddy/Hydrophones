@@ -14,6 +14,8 @@
 
 #define INT_PIN 5
 #define SAMPLE_CLK_PIN 9
+#define DATA_PIN 8
+
 
 volatile bool sync_flag = false;
 volatile bool ADC_flag = false;
@@ -68,8 +70,14 @@ float goertzel(bool bin_number, float targetFreq) {
     return real * real + imag * imag;
 }
 
-void send_peak() {
+PIO pio;
+uint sm;
+uint offset;
 
+void send_peak() {
+    uint32_t packet = ((uint32_t)peak_time << 2) | (peak_freq & 0x3);
+
+    pio_sm_put_blocking(pio, sm, packet);
 }
 
 void core1_entry() {
@@ -96,6 +104,7 @@ void core1_entry() {
                 for (int i = 0; i < N; ++i) {
                     if (bin[0][i] > 512 || bin[0][i] < -512) {
                         peak_time = (bin_count * N) + i;
+                        send_peak();
                         break;
                     }
                 }
@@ -127,6 +136,7 @@ void core1_entry() {
                 for (int i = 0; i < N; ++i) {
                     if (bin[1][i] > 512 || bin[1][i] < -512) {
                         peak_time = (bin_count * N) + i;
+                        send_peak();
                         break;
                     }
                 }
@@ -142,6 +152,11 @@ void core1_entry() {
 int main() {
 
     stdio_init_all();
+
+    bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&customcom_program, &pio,
+        &sm, &offset, 0, 1, true);
+    hard_assert(success);
+    customcom_program_init(pio, sm, offset, DATA_PIN, SAMPLE_CLK_PIN);
 
     spi_init(SPI_PORT_ADC, 8 * 1000 * 1000);
     gpio_set_function(PIN_RX_ADC, GPIO_FUNC_SPI);
@@ -169,6 +184,8 @@ int main() {
         if (sync_flag == 1) {
             binflag[0] = 0;
             binflag[1] = 0;
+            peak_time = -1;
+            peak_freq = -1;
             bin_count = 0;
             while (gpio_get(INT_PIN)) {
                 tight_loop_contents();

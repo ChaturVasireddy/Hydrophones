@@ -1,34 +1,44 @@
 .program customcom
-.side_set 1
 
 .wrap_target
-    set pindirs, 1      side 0
 
-    bitloop:
-        out x, 1     side 0 [1]
-        jmp !x dozero     side 1 [1]
-    doone:
-        nop     side 1a
-        jmp bitloop     side 1
-    dozero:
-        nop     side 0
-        jmp bitloop    side 0
+    set pins, 1
+    pull block
+
+    wait 0 pin 0
+    wait 1 pin 0
+    set pins, 0
+
+    set x, 31
+
+bitloop:
+    wait 0 pin 0
+    wait 1 pin 0
+    out pins, 1
+    jmp x-- bitloop
+
+    wait 0 pin 0
+    wait 1 pin 0
 .wrap
 
 % c-sdk {
     #include "hardware/clocks.h"
 
-    void customcom_program_init(PIO pio, uint sm, uint offset, uint pins) {
-        pio_gpio_init(pio, pins);
+    void customcom_program_init(PIO pio, uint sm, uint offset, uint data_pin, uint sample_clock_pin) {
+        pio_gpio_init(pio, data_pin);
+        pio_gpio_init(pio, sample_clock_pin);
+    
+        pio_sm_set_consecutive_pindirs(pio,sm, data_pin,1,true);
 
         pio_sm_config c = customcom_program_get_default_config(offset);
 
-        sm_config_set_sideset_pins(&c, pins); 
-        sm_config_set_set_pins(&c, pins, 1);
-        sm_config_set_out_shift(&c, false, true, 16);
+        sm_config_set_set_pins(&c, data_pin, 1);
+        sm_config_set_out_pins(&c, data_pin, 1);
+        sm_config_set_out_shift(&c, false, true, 32);
 
-        float div = clock_get_hz(clk_sys) / (1800000);
-        sm_config_set_clkdiv(&c, div);
+        sm_config_set_clkdiv(&c, 1.0f);
+
+        sm_config_set_in_pins(&c, sample_clock_pin);
 
         pio_sm_init(pio, sm, offset, &c);
         pio_sm_set_enabled(pio, sm, true);
