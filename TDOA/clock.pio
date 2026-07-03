@@ -1,0 +1,26 @@
+.program clock
+
+.wrap_target
+    set pins, 1
+    set pins, 0
+.wrap
+
+
+% c-sdk {
+#include "hardware/clocks.h"
+
+    void clock_program_init(PIO pio, uint sm, uint offset, uint pin) {
+        pio_gpio_init(pio, pin);
+        pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+
+        pio_sm_config c = clock_program_get_default_config(offset);
+
+        sm_config_set_set_pins(&c, pin, 1);
+
+        float div = (float)clock_get_hz(clk_sys) / (125000.0f * 2.0f);
+        sm_config_set_clkdiv(&c, div);
+
+        pio_sm_init(pio, sm, offset, &c);
+        pio_sm_set_enabled(pio, sm, true);
+    }
+%}
