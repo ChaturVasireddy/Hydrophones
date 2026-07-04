@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include "hardware/pio.h"
-#include "customcom.pio.h"
+#include "customtx.pio.h"
 
 #define F0 25000.0f
 #define F1 30000.0f
@@ -76,7 +76,6 @@ uint offset;
 
 void send_peak() {
     uint32_t packet = ((uint32_t)peak_time << 2) | (peak_freq & 0x3);
-
     pio_sm_put_blocking(pio, sm, packet);
 }
 
@@ -153,10 +152,10 @@ int main() {
 
     stdio_init_all();
 
-    bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&customcom_program, &pio,
+    bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&customtx_program, &pio,
         &sm, &offset, 0, 1, true);
     hard_assert(success);
-    customcom_program_init(pio, sm, offset, DATA_PIN, SAMPLE_CLK_PIN);
+    customtx_program_init(pio, sm, offset, DATA_PIN, SAMPLE_CLK_PIN);
 
     spi_init(SPI_PORT_ADC, 8 * 1000 * 1000);
     gpio_set_function(PIN_RX_ADC, GPIO_FUNC_SPI);

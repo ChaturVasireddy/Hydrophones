@@ -1,4 +1,4 @@
-.program customcom
+.program customtx
 
 .wrap_target
 
@@ -24,13 +24,13 @@ bitloop:
 % c-sdk {
     #include "hardware/clocks.h"
 
-    void customcom_program_init(PIO pio, uint sm, uint offset, uint data_pin, uint sample_clock_pin) {
+    void customtx_program_init(PIO pio, uint sm, uint offset, uint data_pin, uint sample_clock_pin) {
         pio_gpio_init(pio, data_pin);
         pio_gpio_init(pio, sample_clock_pin);
     
         pio_sm_set_consecutive_pindirs(pio,sm, data_pin,1,true);
 
-        pio_sm_config c = customcom_program_get_default_config(offset);
+        pio_sm_config c = customtx_program_get_default_config(offset);
 
         sm_config_set_set_pins(&c, data_pin, 1);
         sm_config_set_out_pins(&c, data_pin, 1);
